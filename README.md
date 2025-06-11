@@ -1,1 +1,1 @@
-# hedgehog-game
+# Hedgehog-game
