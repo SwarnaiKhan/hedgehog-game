@@ -2,19 +2,491 @@
    <link rel="icon" type="image/png" href="hdghg.png">
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hedge Flip</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hedgehog Timer Transformation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(to bottom, #1a5d1a, #0e3a0e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            color: #ffd166;
+            letter-spacing: 2px;
+            position: relative;
+        }
+        
+        h1::after {
+            content: "🦔";
+            position: absolute;
+            right: -40px;
+            top: -15px;
+            font-size: 2.5rem;
+            animation: spin 5s infinite linear;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+            color: #a5ffa5;
+            line-height: 1.6;
+        }
+        
+        .game-area {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            background: linear-gradient(to bottom, #5dac5d, #3a7d3a);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            border: 5px solid #ffd166;
+            margin: 20px 0;
+        }
+        
+        #timer-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 15px;
+            color: #ffd166;
+            z-index: 20;
+        }
+        
+        #hedgehog {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: 30;
+            transition: all 0.5s ease;
+        }
+        
+        /* Rolling ball style */
+        .rolling {
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #8D6E63, #5D4037);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+            animation: roll 2s infinite linear;
+        }
+        
+        @keyframes roll {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Standing hedgehog style */
+        .standing {
+            width: 100px;
+            height: 60px;
+            background: #8D6E63;
+            border-radius: 50% 50% 0 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .face {
+            position: relative;
+            width: 60px;
+            height: 40px;
+            margin-top: 5px;
+        }
+        
+        .eye {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: black;
+            border-radius: 50%;
+            top: 15px;
+        }
+        
+        .eye.left { left: 15px; }
+        .eye.right { right: 15px; }
+        
+        .nose {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: black;
+            border-radius: 50%;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .spikes {
+            position: absolute;
+            top: -15px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .spike {
+            width: 0;
+            height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-bottom: 15px solid #5D4037;
+        }
+        
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to bottom, #8D6E63, #5D4037);
+            z-index: 5;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            z-index: 1;
+        }
+        
+        .tree {
+            position: absolute;
+            bottom: 80px;
+            z-index: 2;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 25px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 16px 40px;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(to right, #ff9a3c, #ff6b6b);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to right, #ff8a2a, #ff5a5a);
+        }
+        
+        button:active {
+            transform: translateY(2px);
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            max-width: 800px;
+        }
+        
+        .instructions h2 {
+            color: #ffd166;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        .instructions p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .transformation-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd166;
+            z-index: 100;
+            box-shadow: 0 0 40px rgba(255, 209, 102, 0.5);
+            display: none;
+            text-align: center;
+        }
+        
+        footer {
+            margin-top: 20px;
+            padding: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2.8rem; }
+            .subtitle { font-size: 1.2rem; }
+            .game-area { height: 400px; }
+            button { padding: 14px 30px; font-size: 1.1rem; }
+        }
+        
+        @media (max-width: 480px) {
+            h1 { font-size: 2.2rem; }
+            .subtitle { font-size: 1rem; }
+            .game-area { height: 350px; }
+        }
+    </style>
 </head>
 <body>
-  <div class="game-container">
-    <img id="hedgehog" src="hedgehog.png" alt="Hedgehog" />
-  </div>
+    <div class="container">
+        <div class="header">
+            <h1>Hedgehog Timer Transformation</h1>
+            <p class="subtitle">Watch the hedgehog roll like a ball until time runs out, then see it transform into a cute little creature!</p>
+        </div>
+        
+        <div class="game-area">
+            <div id="timer-display">10</div>
+            <div id="hedgehog" class="rolling"></div>
+            <div class="ground"></div>
+            <!-- Background elements will be added here -->
+            
+            <div class="transformation-message" id="transformation-message">
+                Transformation Complete!
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="start-btn">
+                <i class="fas fa-play"></i> START GAME
+            </button>
+            <button id="reset-btn">
+                <i class="fas fa-redo"></i> RESET GAME
+            </button>
+        </div>
+        
+        <div class="instructions">
+            <h2>How It Works</h2>
+            <p>1. Click START to begin the timer (10 seconds)</p>
+            <p>2. Watch the hedgehog roll around like a ball during the timer</p>
+            <p>3. When time runs out, the hedgehog will transform into its cute form</p>
+            <p>4. The transformation is complete when the hedgehog settles down</p>
+        </div>
+        
+        <footer>
+            <p>Hedgehog Timer Transformation &copy; 2023 | Watch the magical transformation!</p>
+        </footer>
+    </div>
 
-  <audio id="whee-sound" src="whee.mp3"></audio>
-
-  <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const hedgehog = document.getElementById('hedgehog');
+            const timerDisplay = document.getElementById('timer-display');
+            const startBtn = document.getElementById('start-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const gameArea = document.querySelector('.game-area');
+            const message = document.getElementById('transformation-message');
+            
+            // Game variables
+            let timer = 10;
+            let gameActive = false;
+            let gameInterval;
+            let timerInterval;
+            let x = 100, y = 100;
+            let dx = 3, dy = 2;
+            let rotation = 0;
+            
+            // Create background elements
+            function createBackground() {
+                // Create clouds
+                for (let i = 0; i < 5; i++) {
+                    const cloud = document.createElement('div');
+                    cloud.className = 'cloud';
+                    const size = Math.random() * 80 + 40;
+                    cloud.style.width = `${size}px`;
+                    cloud.style.height = `${size * 0.6}px`;
+                    cloud.style.top = `${Math.random() * 150}px`;
+                    cloud.style.left = `${Math.random() * 800}px`;
+                    gameArea.appendChild(cloud);
+                }
+                
+                // Create trees
+                for (let i = 0; i < 8; i++) {
+                    const tree = document.createElement('div');
+                    tree.className = 'tree';
+                    tree.style.left = `${Math.random() * 800}px`;
+                    tree.style.height = `${Math.random() * 100 + 80}px`;
+                    
+                    // Simple tree drawing
+                    tree.innerHTML = `
+                        <div style="position:absolute; bottom:0; width:20px; height:${parseInt(tree.style.height)*0.7}px; background:#5D4037;"></div>
+                        <div style="position:absolute; bottom:${parseInt(tree.style.height)*0.7}px; left:-15px; width:50px; height:${parseInt(tree.style.height)*0.3}px; background:#2E7D32; border-radius:50%;"></div>
+                    `;
+                    
+                    gameArea.appendChild(tree);
+                }
+            }
+            
+            // Transform hedgehog from ball to cute form
+            function transformHedgehog() {
+                hedgehog.classList.remove('rolling');
+                hedgehog.classList.add('standing');
+                
+                // Create hedgehog details
+                hedgehog.innerHTML = `
+                    <div class="spikes">
+                        <div class="spike"></div>
+                        <div class="spike"></div>
+                        <div class="spike"></div>
+                        <div class="spike"></div>
+                        <div class="spike"></div>
+                    </div>
+                    <div class="face">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="nose"></div>
+                    </div>
+                `;
+                
+                // Show transformation message
+                message.style.display = 'block';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 3000);
+            }
+            
+            // Game loop for rolling movement
+            function gameLoop() {
+                if (!gameActive) return;
+                
+                // Update position
+                x += dx;
+                y += dy;
+                
+                // Boundary collision
+                if (x <= 0 || x >= gameArea.offsetWidth - 80) {
+                    dx = -dx;
+                }
+                if (y <= 0 || y >= gameArea.offsetHeight - 80) {
+                    dy = -dy;
+                }
+                
+                // Update rotation
+                rotation += 5;
+                hedgehog.style.transform = `rotate(${rotation}deg)`;
+                
+                // Update position
+                hedgehog.style.left = `${x}px`;
+                hedgehog.style.top = `${y}px`;
+            }
+            
+            // Start the game
+            function startGame() {
+                if (gameActive) return;
+                
+                gameActive = true;
+                timer = 10;
+                x = 100;
+                y = 100;
+                dx = 3;
+                dy = 2;
+                rotation = 0;
+                
+                // Reset hedgehog to rolling state
+                hedgehog.classList.remove('standing');
+                hedgehog.classList.add('rolling');
+                hedgehog.innerHTML = '';
+                
+                // Update timer display
+                timerDisplay.textContent = timer;
+                
+                // Start game loops
+                gameInterval = setInterval(gameLoop, 30);
+                
+                // Start countdown timer
+                timerInterval = setInterval(() => {
+                    timer--;
+                    timerDisplay.textContent = timer;
+                    
+                    if (timer <= 0) {
+                        clearInterval(timerInterval);
+                        gameActive = false;
+                        clearInterval(gameInterval);
+                        transformHedgehog();
+                    }
+                }, 1000);
+            }
+            
+            // Reset the game
+            function resetGame() {
+                clearInterval(timerInterval);
+                clearInterval(gameInterval);
+                gameActive = false;
+                startGame();
+            }
+            
+            // Event listeners
+            startBtn.addEventListener('click', startGame);
+            resetBtn.addEventListener('click', resetGame);
+            
+            // Initialize background
+            createBackground();
+        });
+    </script>
 </body>
 </html>
