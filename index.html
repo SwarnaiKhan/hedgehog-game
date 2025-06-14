@@ -2,19 +2,922 @@
 <html lang="en">
    <link rel="icon" type="image/png" href="hdghg.png">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hedge Flip</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roll-a-Hog: Endless Hedgehog Adventure</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            background: linear-gradient(to bottom, #1a5d1a, #0e3a0e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .game-title {
+            text-align: center;
+            margin-bottom: 30px;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            color: #ffd166;
+            letter-spacing: 2px;
+            position: relative;
+            animation: bounceTitle 2s infinite;
+        }
+        
+        @keyframes bounceTitle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        h1::after {
+            content: "🦔";
+            position: absolute;
+            right: 20px;
+            top: -15px;
+            font-size: 2.5rem;
+            animation: spin 5s infinite linear;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+            color: #a5ffa5;
+            line-height: 1.6;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            max-width: 800px;
+            background: linear-gradient(to bottom, #5dac5d, #3a7d3a);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            border: 5px solid #ffd166;
+            margin: 20px 0;
+        }
+        
+        #game-scene {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to bottom, #8D6E63, #5D4037);
+            z-index: 5;
+        }
+        
+        #hedgehog {
+            position: absolute;
+            bottom: 80px;
+            left: 150px;
+            width: 80px;
+            height: 80px;
+            background: #795548;
+            border-radius: 50%;
+            z-index: 30;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s;
+            transform-origin: center;
+        }
+        
+        .hedgehog-face {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #5D4037;
+            border-radius: 50%;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .eye {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .eye.left { top: 12px; left: 8px; }
+        .eye.right { top: 12px; right: 8px; }
+        
+        .spikes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+        
+        .spike {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 15px solid #5D4037;
+            transform-origin: center bottom;
+        }
+        
+        .platform {
+            position: absolute;
+            height: 30px;
+            background: linear-gradient(to bottom, #8D6E63, #5D4037);
+            border-radius: 10px;
+            z-index: 10;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .obstacle {
+            position: absolute;
+            background: #8D6E63;
+            border-radius: 10px;
+            z-index: 15;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .collectible {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            z-index: 20;
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .game-ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffd166;
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 16px 40px;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(to right, #ff9a3c, #ff6b6b);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to right, #ff8a2a, #ff5a5a);
+        }
+        
+        button:active {
+            transform: translateY(2px);
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            max-width: 800px;
+        }
+        
+        .instructions h2 {
+            color: #ffd166;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        .instructions p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .tap-hint {
+            position: absolute;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            animation: pulseHint 2s infinite;
+            z-index: 40;
+            display: none;
+        }
+        
+        @keyframes pulseHint {
+            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+            50% { opacity: 0.7; transform: translateX(-50%) scale(1.1); }
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        .game-over.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .game-over-content {
+            background: linear-gradient(135deg, #1a5d1a, #0e3a0e);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 40px rgba(255, 209, 102, 0.5);
+            border: 3px solid #ffd166;
+            transform: scale(0.8);
+            animation: popIn 0.5s forwards;
+        }
+        
+        @keyframes popIn {
+            to { transform: scale(1); }
+        }
+        
+        .game-over-content h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #ffd166;
+        }
+        
+        .game-over-content p {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+        }
+        
+        .final-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .final-stat {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            min-width: 150px;
+        }
+        
+        .final-stat h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #ffd166;
+        }
+        
+        .final-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        footer {
+            margin-top: 20px;
+            padding: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            width: 100%;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            z-index: 1;
+        }
+        
+        .tree {
+            position: absolute;
+            bottom: 80px;
+            z-index: 2;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2.8rem; }
+            .subtitle { font-size: 1.2rem; }
+            #game-container { height: 400px; }
+            button { padding: 14px 30px; font-size: 1.1rem; }
+        }
+        
+        @media (max-width: 480px) {
+            h1 { font-size: 2.2rem; }
+            .subtitle { font-size: 1rem; }
+            #game-container { height: 350px; }
+            #hedgehog { width: 60px; height: 60px; }
+        }
+    </style>
 </head>
 <body>
-  <div class="game-container">
-    <img id="hedgehog" src="hedgehog.png" alt="Hedgehog" />
-  </div>
+    <div class="container">
+        <div class="game-title">
+            <h1>Roll-a-Hog</h1>
+            <p class="subtitle">Tap anywhere to bounce your hedgehog forward! Collect apples and avoid obstacles in this endless adventure.</p>
+        </div>
+        
+        <div id="game-container">
+            <div id="game-scene">
+                <!-- Background elements will be added here -->
+                <div id="ground"></div>
+                <div id="hedgehog">
+                    <div class="hedgehog-face">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                    </div>
+                    <div class="spikes" id="spikes"></div>
+                </div>
+                <!-- Platforms, obstacles, and collectibles will be added here -->
+            </div>
+            
+            <div class="game-ui">
+                <div class="stat">
+                    <i class="fas fa-apple-alt"></i>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+                <div class="stat">
+                    <i class="fas fa-road"></i>
+                    <div class="stat-value" id="distance">0m</div>
+                </div>
+            </div>
+            
+            <div class="tap-hint" id="tap-hint">TAP TO BOUNCE!</div>
+            
+            <div class="game-over" id="game-over">
+                <div class="game-over-content">
+                    <h2>GAME OVER!</h2>
+                    <p>Your hedgehog rolled away</p>
+                    
+                    <div class="final-stats">
+                        <div class="final-stat">
+                            <h3>Distance</h3>
+                            <div class="final-value" id="final-distance">0m</div>
+                        </div>
+                        <div class="final-stat">
+                            <h3>Apples</h3>
+                            <div class="final-value" id="final-apples">0</div>
+                        </div>
+                    </div>
+                    
+                    <button id="play-again">
+                        <i class="fas fa-redo"></i> PLAY AGAIN
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-controls">
+            <button id="start-btn">
+                <i class="fas fa-play"></i> START GAME
+            </button>
+        </div>
+        
+        <div class="instructions">
+            <h2>How to Play</h2>
+            <p>Tap anywhere on the screen to make your hedgehog bounce forward.</p>
+            <p>Time your bounces to land on platforms and avoid falling!</p>
+            <p>Collect apples for bonus points and watch out for obstacles.</p>
+            <p>The game gets faster the further you go - how far can you roll?</p>
+        </div>
+        
+        <footer>
+            <p>Roll-a-Hog &copy; 2023 | Endless Hedgehog Adventure</p>
+        </footer>
+    </div>
 
-  <audio id="whee-sound" src="whee.mp3"></audio>
-
-  <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameScene = document.getElementById('game-scene');
+            const hedgehog = document.getElementById('hedgehog');
+            const spikes = document.getElementById('spikes');
+            const startBtn = document.getElementById('start-btn');
+            const playAgainBtn = document.getElementById('play-again');
+            const scoreDisplay = document.getElementById('score');
+            const distanceDisplay = document.getElementById('distance');
+            const finalDistance = document.getElementById('final-distance');
+            const finalApples = document.getElementById('final-apples');
+            const gameOverScreen = document.getElementById('game-over');
+            const tapHint = document.getElementById('tap-hint');
+            
+            // Game variables
+            let gameActive = false;
+            let score = 0;
+            let distance = 0;
+            let speed = 5;
+            let isJumping = false;
+            let platforms = [];
+            let obstacles = [];
+            let collectibles = [];
+            let gameLoopId;
+            let platformTimer;
+            let difficultyTimer;
+            let lastPlatformX = 300;
+            
+            // Initialize game
+            function initGame() {
+                // Reset game state
+                gameActive = true;
+                score = 0;
+                distance = 0;
+                speed = 5;
+                isJumping = false;
+                
+                // Clear existing elements
+                platforms.forEach(p => p.remove());
+                obstacles.forEach(o => o.remove());
+                collectibles.forEach(c => c.remove());
+                platforms = [];
+                obstacles = [];
+                collectibles = [];
+                
+                // Reset hedgehog position
+                hedgehog.style.bottom = "80px";
+                hedgehog.style.left = "150px";
+                hedgehog.style.transform = "rotate(0deg)";
+                
+                // Update displays
+                scoreDisplay.textContent = score;
+                distanceDisplay.textContent = distance + "m";
+                
+                // Hide game over screen
+                gameOverScreen.classList.remove('show');
+                
+                // Create initial platforms
+                createPlatform(150, 400, 200);
+                createPlatform(400, 600, 250);
+                createPlatform(700, 900, 300);
+                
+                // Create background elements
+                createBackground();
+                
+                // Show tap hint
+                tapHint.style.display = 'block';
+                
+                // Start game loops
+                startGameLoops();
+            }
+            
+            // Create background elements
+            function createBackground() {
+                // Create clouds
+                for (let i = 0; i < 5; i++) {
+                    const cloud = document.createElement('div');
+                    cloud.className = 'cloud';
+                    const size = Math.random() * 80 + 40;
+                    cloud.style.width = `${size}px`;
+                    cloud.style.height = `${size * 0.6}px`;
+                    cloud.style.top = `${Math.random() * 150}px`;
+                    cloud.style.left = `${Math.random() * 800}px`;
+                    cloud.style.animationDuration = `${Math.random() * 30 + 30}s`;
+                    gameScene.appendChild(cloud);
+                }
+                
+                // Create trees
+                for (let i = 0; i < 10; i++) {
+                    const tree = document.createElement('div');
+                    tree.className = 'tree';
+                    tree.style.left = `${Math.random() * 800}px`;
+                    tree.style.height = `${Math.random() * 100 + 80}px`;
+                    
+                    // Simple tree drawing
+                    tree.innerHTML = `
+                        <div style="position:absolute; bottom:0; width:20px; height:${parseInt(tree.style.height)*0.7}px; background:#5D4037;"></div>
+                        <div style="position:absolute; bottom:${parseInt(tree.style.height)*0.7}px; left:-15px; width:50px; height:${parseInt(tree.style.height)*0.3}px; background:#2E7D32; border-radius:50%;"></div>
+                    `;
+                    
+                    gameScene.appendChild(tree);
+                }
+            }
+            
+            // Generate spikes for the hedgehog
+            function createSpikes() {
+                spikes.innerHTML = '';
+                const spikeCount = 12;
+                for (let i = 0; i < spikeCount; i++) {
+                    const spike = document.createElement('div');
+                    spike.className = 'spike';
+                    spike.style.transform = `rotate(${i * (360 / spikeCount)}deg)`;
+                    spikes.appendChild(spike);
+                }
+            }
+            
+            // Create a platform
+            function createPlatform(startX, endX, y) {
+                const platform = document.createElement('div');
+                platform.className = 'platform';
+                platform.style.left = `${startX}px`;
+                platform.style.width = `${endX - startX}px`;
+                platform.style.bottom = `${y}px`;
+                gameScene.appendChild(platform);
+                
+                platforms.push({
+                    element: platform,
+                    startX: startX,
+                    endX: endX,
+                    y: y
+                });
+                
+                lastPlatformX = endX;
+                
+                // Add obstacles occasionally
+                if (Math.random() > 0.7) {
+                    createObstacle(startX + 50, y);
+                }
+                
+                // Add collectibles occasionally
+                if (Math.random() > 0.5) {
+                    createCollectible(startX + 150, y - 50);
+                }
+            }
+            
+            // Create an obstacle
+            function createObstacle(x, platformY) {
+                const obstacle = document.createElement('div');
+                obstacle.className = 'obstacle';
+                obstacle.style.left = `${x}px`;
+                obstacle.style.width = `${Math.random() * 30 + 20}px`;
+                obstacle.style.height = `${Math.random() * 20 + 10}px`;
+                obstacle.style.bottom = `${platformY}px`;
+                gameScene.appendChild(obstacle);
+                
+                obstacles.push({
+                    element: obstacle,
+                    x: x,
+                    platformY: platformY
+                });
+            }
+            
+            // Create a collectible
+            function createCollectible(x, y) {
+                const collectible = document.createElement('div');
+                collectible.className = 'collectible';
+                collectible.style.left = `${x}px`;
+                collectible.style.bottom = `${y}px`;
+                collectible.innerHTML = '🍎';
+                collectible.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+                gameScene.appendChild(collectible);
+                
+                collectibles.push({
+                    element: collectible,
+                    x: x,
+                    y: y
+                });
+            }
+            
+            // Make the hedgehog jump
+            function hedgehogJump() {
+                if (!gameActive || isJumping) return;
+                
+                isJumping = true;
+                tapHint.style.display = 'none';
+                
+                // Apply jump animation
+                hedgehog.style.transition = 'bottom 0.5s cubic-bezier(0.33, 1, 0.68, 1)';
+                hedgehog.style.bottom = '250px';
+                
+                // Rotate during jump
+                let rotation = 0;
+                const rotateInterval = setInterval(() => {
+                    rotation += 20;
+                    hedgehog.style.transform = `rotate(${rotation}deg)`;
+                }, 50);
+                
+                // End of jump
+                setTimeout(() => {
+                    hedgehog.style.transition = 'bottom 0.3s ease-out';
+                    hedgehog.style.bottom = '80px';
+                    
+                    clearInterval(rotateInterval);
+                    
+                    setTimeout(() => {
+                        isJumping = false;
+                        hedgehog.style.transform = 'rotate(0deg)';
+                    }, 300);
+                }, 500);
+            }
+            
+            // Check for collisions
+            function checkCollisions() {
+                const hedgehogRect = {
+                    left: parseInt(hedgehog.style.left),
+                    right: parseInt(hedgehog.style.left) + 80,
+                    bottom: parseInt(hedgehog.style.bottom),
+                    top: parseInt(hedgehog.style.bottom) + 80
+                };
+                
+                // Check if hedgehog is on a platform
+                let onPlatform = false;
+                platforms.forEach(platform => {
+                    if (hedgehogRect.bottom <= platform.y + 30 && 
+                        hedgehogRect.bottom >= platform.y &&
+                        hedgehogRect.left < platform.endX && 
+                        hedgehogRect.right > platform.startX) {
+                        onPlatform = true;
+                    }
+                });
+                
+                // Game over if not on platform and not jumping
+                if (!onPlatform && !isJumping && hedgehogRect.bottom < 80) {
+                    endGame();
+                }
+                
+                // Check collectible collisions
+                collectibles.forEach((collectible, index) => {
+                    const colRect = {
+                        left: collectible.x,
+                        right: collectible.x + 30,
+                        bottom: collectible.y,
+                        top: collectible.y + 30
+                    };
+                    
+                    if (hedgehogRect.left < colRect.right && 
+                        hedgehogRect.right > colRect.left &&
+                        hedgehogRect.top > colRect.bottom && 
+                        hedgehogRect.bottom < colRect.top) {
+                        
+                        // Collect the item
+                        collectible.element.remove();
+                        collectibles.splice(index, 1);
+                        
+                        // Update score
+                        score += 10;
+                        scoreDisplay.textContent = score;
+                        
+                        // Visual feedback
+                        const feedback = document.createElement('div');
+                        feedback.textContent = '+10';
+                        feedback.style.position = 'absolute';
+                        feedback.style.left = `${collectible.x}px`;
+                        feedback.style.bottom = `${collectible.y}px`;
+                        feedback.style.color = '#ffd166';
+                        feedback.style.fontSize = '1.5rem';
+                        feedback.style.fontWeight = 'bold';
+                        feedback.style.textShadow = '0 0 5px #000';
+                        feedback.style.zIndex = '50';
+                        feedback.style.animation = 'floatUp 1.5s forwards';
+                        
+                        // Keyframes for floating up
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            @keyframes floatUp {
+                                0% { transform: translateY(0); opacity: 1; }
+                                100% { transform: translateY(-100px); opacity: 0; }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                        
+                        gameScene.appendChild(feedback);
+                        setTimeout(() => {
+                            feedback.remove();
+                        }, 1500);
+                    }
+                });
+            }
+            
+            // Move the game world
+            function moveWorld() {
+                if (!gameActive) return;
+                
+                // Move platforms and obstacles
+                platforms.forEach(platform => {
+                    platform.startX -= speed;
+                    platform.endX -= speed;
+                    platform.element.style.left = `${platform.startX}px`;
+                    
+                    // Remove off-screen platforms
+                    if (platform.endX < 0) {
+                        platform.element.remove();
+                        platforms.splice(platforms.indexOf(platform), 1);
+                    }
+                });
+                
+                obstacles.forEach(obstacle => {
+                    obstacle.x -= speed;
+                    obstacle.element.style.left = `${obstacle.x}px`;
+                    
+                    // Remove off-screen obstacles
+                    if (obstacle.x + parseInt(obstacle.element.style.width) < 0) {
+                        obstacle.element.remove();
+                        obstacles.splice(obstacles.indexOf(obstacle), 1);
+                    }
+                });
+                
+                collectibles.forEach(collectible => {
+                    collectible.x -= speed;
+                    collectible.element.style.left = `${collectible.x}px`;
+                    
+                    // Remove off-screen collectibles
+                    if (collectible.x < 0) {
+                        collectible.element.remove();
+                        collectibles.splice(collectibles.indexOf(collectible), 1);
+                    }
+                });
+                
+                // Move background clouds
+                document.querySelectorAll('.cloud').forEach(cloud => {
+                    const currentLeft = parseInt(cloud.style.left);
+                    cloud.style.left = `${currentLeft - speed/3}px`;
+                    
+                    if (currentLeft < -100) {
+                        cloud.style.left = '800px';
+                    }
+                });
+                
+                // Move background trees
+                document.querySelectorAll('.tree').forEach(tree => {
+                    const currentLeft = parseInt(tree.style.left);
+                    tree.style.left = `${currentLeft - speed/2}px`;
+                    
+                    if (currentLeft < -100) {
+                        tree.style.left = '800px';
+                    }
+                });
+                
+                // Update distance
+                distance += speed / 10;
+                distanceDisplay.textContent = Math.floor(distance) + "m";
+            }
+            
+            // Generate new platforms
+            function generatePlatforms() {
+                if (!gameActive) return;
+                
+                const gap = Math.random() * 200 + 100;
+                const width = Math.random() * 300 + 150;
+                const height = Math.random() * 100 + 200;
+                
+                createPlatform(lastPlatformX + gap, lastPlatformX + gap + width, height);
+            }
+            
+            // Increase difficulty
+            function increaseDifficulty() {
+                if (!gameActive) return;
+                
+                speed += 0.1;
+            }
+            
+            // Start game loops
+            function startGameLoops() {
+                // Main game loop
+                gameLoopId = setInterval(() => {
+                    moveWorld();
+                    checkCollisions();
+                }, 50);
+                
+                // Platform generation loop
+                platformTimer = setInterval(generatePlatforms, 2000);
+                
+                // Difficulty increase loop
+                difficultyTimer = setInterval(increaseDifficulty, 3000);
+            }
+            
+            // End the game
+            function endGame() {
+                gameActive = false;
+                
+                // Stop game loops
+                clearInterval(gameLoopId);
+                clearInterval(platformTimer);
+                clearInterval(difficultyTimer);
+                
+                // Show game over screen
+                finalDistance.textContent = Math.floor(distance) + "m";
+                finalApples.textContent = score;
+                gameOverScreen.classList.add('show');
+            }
+            
+            // Event listeners
+            startBtn.addEventListener('click', () => {
+                initGame();
+                startBtn.style.display = 'none';
+                createSpikes();
+            });
+            
+            playAgainBtn.addEventListener('click', () => {
+                initGame();
+                startBtn.style.display = 'none';
+            });
+            
+            document.addEventListener('click', () => {
+                if (gameActive) {
+                    hedgehogJump();
+                }
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (gameActive && (e.code === 'Space' || e.key === ' ')) {
+                    hedgehogJump();
+                }
+            });
+            
+            // Touch support for mobile
+            document.addEventListener('touchstart', (e) => {
+                if (gameActive) {
+                    hedgehogJump();
+                    e.preventDefault(); // Prevent scrolling
+                }
+            }, { passive: false });
+        });
+    </script>
 </body>
 </html>
