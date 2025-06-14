@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://# Hedgehog-games.github.io/sitemap.xml
